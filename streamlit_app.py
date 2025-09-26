@@ -38,7 +38,7 @@ def search_web():
     return Tool(
         name="web_search",
         func=run_with_source,
-        description="실시간 뉴스 및 웹 정보를 검색할 때 사용합니다. 결과는 제목+출처+링크+간단요약(snippet) 형태로 반환됩니다."
+        description="Use it to search for real-time news and web information. Results are returned in the format of title + source + link + brief summary (snippet)."
     )
 
 # ✅ PDF 업로드 → 벡터DB → 검색 툴 생성
@@ -84,12 +84,12 @@ def print_messages():
 
 # ✅ 메인 실행
 def main():
-    st.set_page_config(page_title="AI 비서", layout="wide", page_icon="🤖")
+    st.set_page_config(page_title="DIPA", layout="wide", page_icon="🥗")
 
     with st.container():
-        st.image('./chatbot_logo.png', use_container_width=True)
+        st.image('./logo.png', use_container_width=True)
         st.markdown('---')
-        st.title("안녕하세요! RAG를 활용한 'AI 비서 톡톡이' 입니다")
+        st.title("안녕하세요! RAG를 활용한 식단 추천 AI'DIPA' 입니다")
 
     if "messages" not in st.session_state:
         st.session_state["messages"] = []
@@ -102,6 +102,12 @@ def main():
         st.markdown('---')
         pdf_docs = st.file_uploader("Upload your PDF Files", accept_multiple_files=True, key="pdf_uploader")
 
+        # ✅ 새로고침 버튼 추가
+        if st.button("🔄 새로고침 / 대화 초기화"):
+            st.session_state["messages"] = []
+            st.session_state["session_history"] = {}
+            st.rerun()  # 화면 전체 새로고침
+    
     # ✅ 키 입력 확인
     if st.session_state["OPENAI_API"] and st.session_state["SERPAPI_API"]:
         os.environ['OPENAI_API_KEY'] = st.session_state["OPENAI_API"]
@@ -119,16 +125,26 @@ def main():
 
         prompt = ChatPromptTemplate.from_messages(
             [
-                ("system",
-                "Be sure to answer in Korean. You are a helpful assistant. "
-                "Make sure to use the `pdf_search` tool for searching information from the pdf document. "
-                "If you can't find the information from the PDF document, use the `web_search` tool for searching information from the web. "
-                "If the user’s question contains words like '최신', '현재', or '오늘', you must ALWAYS use the `web_search` tool to ensure real-time information is retrieved. "
-                "Please always include emojis in your responses with a friendly tone. "
-                "Your name is `AI 비서 톡톡이`. Please introduce yourself at the beginning of the conversation."),
-                ("placeholder", "{chat_history}"),
-                ("human", "{input} \n\n Be sure to include emoji in your responses."),
-                ("placeholder", "{agent_scratchpad}"),
+            ("system",
+            "Be sure to answer in Korean. You are a helpful assistant. "
+            "You are DIPA, a friendly and professional diet recommendation AI. "
+            "You must provide optimized diet recommendations based on the user's situation. "
+            "** IMPORTANT RULE: If the user does not provide specific details (such as health condition, allergies, dietary goals, exercise habits, or preferred foods),"
+            "you MUST ask at least 1 clarifying questions before giving any diet recommendations. "
+            "Do not skip this step. Asking clarifying questions first is REQUIRED. "
+            "When you provide a diet recommendation, you MUST include the reasoning or evidence behind each recommendation "
+            "(e.g., 'Includes chicken breast for protein balance', 'I cut down on carbohydrates in the morning to control calories.'). "
+            "Be sure to use the `pdf_search` tool to retrieve information from the PDF document. "
+            "If you cannot find the information in the PDF, use the `web_search` tool. "
+            "If the user’s question includes words like '최신', '현재', or '오늘', you must ALWAYS use the `web_search` tool to ensure real-time information is retrieved. "
+            "If the user asks a question unrelated to diets, you must politely respond that you only answer diet-related questions. "
+            "Always answer with a friendly tone and include emojis in your responses."
+            "If possible, please include the recipe and the source site for the recipe."
+            ),
+            ("placeholder", "{chat_history}"),
+            ("human", "{input} \n\n Please be sure to include emojis in your responses."),
+            ("placeholder", "{agent_scratchpad}"),
+
             ]
         )
 
